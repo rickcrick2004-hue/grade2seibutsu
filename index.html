@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中1理科 学年末試験対策 - BioMaster</title>
+    <!-- Tailwind CSS for rapid styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'M PLUS Rounded 1c', sans-serif;
+            background-color: #f0fdf4; /* Light Green background */
+            color: #1f2937;
+            overflow-x: hidden;
+        }
+
+        /* Card Flip Animation */
+        .scene {
+            perspective: 1000px;
+            width: 100%;
+            height: 300px;
+            cursor: pointer;
+        }
+
+        .card {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .card.is-flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card__face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            font-size: 1.25rem;
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        .card__face--front {
+            background: white;
+            color: #166534;
+            border: 2px solid #bbf7d0;
+        }
+
+        .card__face--back {
+            background: #166534; /* Green-800 */
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        /* Utility */
+        .hidden-screen {
+            display: none;
+        }
+
+        .btn-push {
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .btn-push:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+
+        /* Scrollbar hiding for cleaner UI */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <!-- Header -->
+    <header class="bg-green-600 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="max-w-3xl mx-auto flex justify-between items-center">
+            <div>
+                <h1 class="text-xl font-bold">中1理科 2分野マスター</h1>
+                <p class="text-xs text-green-100" id="version-display">ver 1.0.0</p>
+            </div>
+            <button onclick="app.resetToHome()" class="text-sm bg-green-700 px-3 py-1 rounded hover:bg-green-800 transition">
+                TOPへ
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow p-4 max-w-3xl mx-auto w-full flex flex-col justify-center">
+
+        <!-- SCREEN: HOME (Mode Selection) -->
+        <div id="screen-home" class="space-y-6 animate-fade-in">
+            <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500">
+                <h2 class="text-lg font-bold mb-2 text-gray-700">学習範囲を選んでください</h2>
+                <div class="grid grid-cols-1 gap-3">
+                    <button onclick="app.startSession(1)" class="btn-push w-full text-left px-4 py-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg font-semibold text-green-800 flex justify-between items-center">
+                        <span>第1章：細胞と生物の成り立ち</span>
+                        <span class="text-xs bg-green-200 px-2 py-1 rounded-full">15問</span>
+                    </button>
+                    <button onclick="app.startSession(2)" class="btn-push w-full text-left px-4 py-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg font-semibold text-green-800 flex justify-between items-center">
+                        <span>第2章：植物の体のつくり</span>
+                        <span class="text-xs bg-green-200 px-2 py-1 rounded-full">13問</span>
+                    </button>
+                    <button onclick="app.startSession(3)" class="btn-push w-full text-left px-4 py-3 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg font-semibold text-green-800 flex justify-between items-center">
+                        <span>第3章：蒸散と光合成・呼吸</span>
+                        <span class="text-xs bg-green-200 px-2 py-1 rounded-full">22問</span>
+                    </button>
+                    <button onclick="app.startSession('all')" class="btn-push w-full text-left px-4 py-3 bg-orange-50 hover:bg-orange-100 border border-orange-200 rounded-lg font-bold text-orange-800 flex justify-between items-center shadow-sm">
+                        <span>全範囲まとめテスト</span>
+                        <span class="text-xs bg-orange-200 px-2 py-1 rounded-full">50問</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-blue-500">
+                <h2 class="text-lg font-bold mb-2 text-gray-700">出題オプション</h2>
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="orderMode" value="sequential" checked class="form-radio text-blue-600 h-5 w-5">
+                        <span>順番通り</span>
+                    </label>
+                    <label class="flex items-center space-x-2 cursor-pointer">
+                        <input type="radio" name="orderMode" value="random" class="form-radio text-blue-600 h-5 w-5">
+                        <span>ランダム (シャッフル)</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN: STUDY (Flashcards) -->
+        <div id="screen-study" class="hidden-screen w-full max-w-md mx-auto">
+            
+            <!-- Progress Bar -->
+            <div class="mb-4">
+                <div class="flex justify-between text-sm font-semibold text-gray-600 mb-1">
+                    <span id="progress-text">1 / 10</span>
+                    <span id="chapter-badge" class="bg-green-100 text-green-800 px-2 rounded text-xs py-0.5">Chapter 1</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-green-600 h-2.5 rounded-full transition-all duration-300" style="width: 10%"></div>
+                </div>
+            </div>
+
+            <!-- Card Area -->
+            <div class="scene mb-6" onclick="app.flipCard()">
+                <div class="card" id="flashcard">
+                    <div class="card__face card__face--front">
+                        <div class="absolute top-4 left-4 text-xs font-bold text-green-600 border border-green-200 px-2 py-1 rounded">Q.</div>
+                        <p id="card-question" class="font-bold">ここに問題が表示されます</p>
+                        <p class="absolute bottom-4 text-xs text-gray-400 font-normal animate-pulse">タップして答えを見る</p>
+                    </div>
+                    <div class="card__face card__face--back">
+                        <div class="absolute top-4 left-4 text-xs font-bold text-green-200 border border-green-400 px-2 py-1 rounded">A.</div>
+                        <p id="card-answer" class="font-bold text-xl">ここに答えが表示されます</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls (Visible after flip) -->
+            <div id="controls-area" class="grid grid-cols-2 gap-4 opacity-0 pointer-events-none transition-opacity duration-200">
+                <button onclick="app.processResult(false)" class="btn-push bg-red-100 text-red-700 py-3 rounded-xl font-bold border-b-4 border-red-200 hover:bg-red-200 flex flex-col items-center">
+                    <span>🤔 まだ不安</span>
+                    <span class="text-xs font-normal">あとで復習</span>
+                </button>
+                <button onclick="app.processResult(true)" class="btn-push bg-blue-100 text-blue-700 py-3 rounded-xl font-bold border-b-4 border-blue-200 hover:bg-blue-200 flex flex-col items-center">
+                    <span>👍 覚えた！</span>
+                    <span class="text-xs font-normal">次へ</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN: RESULT -->
+        <div id="screen-result" class="hidden-screen text-center space-y-6">
+            <div class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-green-500">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">おつかれさま！</h2>
+                <p class="text-gray-600 mb-6">今回のセッションが終了しました。</p>
+                
+                <div class="flex justify-center space-x-8 mb-6">
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-blue-600" id="result-ok">0</div>
+                        <div class="text-sm text-gray-500">覚えた</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-red-500" id="result-ng">0</div>
+                        <div class="text-sm text-gray-500">要復習</div>
+                    </div>
+                </div>
+
+                <div id="review-suggestion" class="hidden bg-red-50 p-4 rounded-lg border border-red-100 mb-4">
+                    <p class="text-red-700 font-bold mb-2">💡 苦手な問題を復習しよう！</p>
+                    <button onclick="app.startReview()" class="btn-push w-full bg-red-500 text-white py-2 rounded-lg font-bold shadow hover:bg-red-600">
+                        「要復習」のみリトライ
+                    </button>
+                </div>
+
+                <button onclick="app.resetToHome()" class="btn-push w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-200">
+                    最初の画面に戻る
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-gray-100 text-center py-4 text-xs text-gray-500">
+        <p>&copy; 2024 Junior High Science App | ver <span id="footer-ver"></span></p>
+    </footer>
+
+    <!-- Application Logic -->
+    <script>
+        /**
+         * Configuration & Data
+         */
+        const CONFIG = {
+            VERSION: "1.1.2", // Update this string to update the app version display
+        };
+
+        const QUIZ_DATA = [
+            // Chapter 1
+            { id: 1, ch: 1, q: "生物の体をつくる基本単位を何というか？", a: "細胞" },
+            { id: 2, ch: 1, q: "細胞の中にふつう1個あり、染色液によく染まる丸い粒を何というか？", a: "核" },
+            { id: 3, ch: 1, q: "細胞の最も外側にある、薄い膜を何というか？", a: "細胞膜" },
+            { id: 4, ch: 1, q: "核のまわりの、細胞膜に包まれた部分をまとめて何というか？", a: "細胞質" },
+            { id: 5, ch: 1, q: "植物の細胞にのみ見られる、光合成を行う緑色の粒を何というか？", a: "葉緑体" },
+            { id: 6, ch: 1, q: "植物の細胞にのみ見られる、細胞膜の外側にある丈夫なしきりを何というか？", a: "細胞壁" },
+            { id: 7, ch: 1, q: "植物の細胞に発達しており、不要な物質や貯蔵物質が溶けた液体を含む袋を何というか？", a: "液胞" },
+            { id: 8, ch: 1, q: "核を染める際によく使われる、赤色の染色液の名前は？（1つ答えよ）", a: "酢酸カーミン液<br><span class='text-sm'>(または酢酸オルセイン液)</span>" },
+            { id: 9, ch: 1, q: "体が1つの細胞だけでできている生物を何というか？", a: "単細胞生物" },
+            { id: 10, ch: 1, q: "ミカヅキモ、ゾウリムシ、ミドリムシ、アメーバなどは何生物に分類されるか？", a: "単細胞生物" },
+            { id: 11, ch: 1, q: "体が多数の細胞からできている生物を何というか？", a: "多細胞生物" },
+            { id: 12, ch: 1, q: "ヒト、ツバキ、ミジンコなどは何生物に分類されるか？", a: "多細胞生物" },
+            { id: 13, ch: 1, q: "形やはたらきが同じ細胞が集まったものを何というか？", a: "組織" },
+            { id: 14, ch: 1, q: "数種類の組織が集まり、特定のはたらきをする部分（葉や胃など）を何というか？", a: "器官" },
+            { id: 15, ch: 1, q: "器官が集まって、1つの生命体としての体を何というか？", a: "個体" },
+            // Chapter 2
+            { id: 16, ch: 2, q: "葉の表面に見られるすじを何というか？", a: "葉脈" },
+            { id: 17, ch: 2, q: "葉の裏側に多く見られる、2つの三日月形の細胞に囲まれたすき間を何というか？", a: "気孔" },
+            { id: 18, ch: 2, q: "気孔を形づくっている2つの細胞を何というか？", a: "孔辺細胞" },
+            { id: 19, ch: 2, q: "根から吸い上げられた水や肥料分の通り道となる管を何というか？", a: "道管" },
+            { id: 20, ch: 2, q: "葉で作られた養分の通り道となる管を何というか？", a: "師管" },
+            { id: 21, ch: 2, q: "道管や師管が集まって束のようになっている部分を何というか？", a: "維管束" },
+            { id: 22, ch: 2, q: "葉の維管束において、道管は「表側」と「裏側」のどちらにあるか？", a: "表側" },
+            { id: 23, ch: 2, q: "茎の維管束において、道管は「内側」と「外側」のどちらにあるか？", a: "内側" },
+            { id: 24, ch: 2, q: "ホウセンカ（双子葉類）の茎の維管束はどのように並んでいるか？", a: "輪のように並んでいる" },
+            { id: 25, ch: 2, q: "トウモロコシ（単子葉類）の茎の維管束はどのように並んでいるか？", a: "全体に散らばっている" },
+            { id: 26, ch: 2, q: "根の先端近くにある、細い毛のようなものを何というか？", a: "根毛" },
+            { id: 27, ch: 2, q: "根毛があることで、根の表面積はどうなるか？", a: "大きくなる" },
+            { id: 28, ch: 2, q: "根の表面積が大きくなることで、どのような利点があるか？", a: "水や肥料分を<br>効率よく吸収できる" },
+            // Chapter 3
+            { id: 29, ch: 3, q: "植物内の水が、水蒸気となって気孔から出ていく現象を何というか？", a: "蒸散" },
+            { id: 30, ch: 3, q: "蒸散は、葉の「表側」と「裏側」のどちらでより盛んに行われるか？", a: "裏側" },
+            { id: 31, ch: 3, q: "蒸散を調べる実験で、水面からの蒸発を防ぐために何を使うか？", a: "油" },
+            { id: 32, ch: 3, q: "蒸散の量を比べる実験で、気孔をふさぐために塗る物質は何か？", a: "ワセリン" },
+            { id: 33, ch: 3, q: "植物が光を受けて、デンプンなどの養分をつくるはたらきを何というか？", a: "光合成" },
+            { id: 34, ch: 3, q: "光合成が行われる、細胞内の緑色の粒は何か？", a: "葉緑体" },
+            { id: 35, ch: 3, q: "光合成の原料となる、空気中から取り入れる気体は何か？", a: "二酸化炭素" },
+            { id: 36, ch: 3, q: "光合成の原料となる、根から吸収する物質は何か？", a: "水" },
+            { id: 37, ch: 3, q: "光合成によってつくられ、空気中に出される気体は何か？", a: "酸素" },
+            { id: 38, ch: 3, q: "デンプンがあることを確かめるために使う試薬は何か？", a: "ヨウ素液" },
+            { id: 39, ch: 3, q: "葉をヨウ素液につける前、脱色するために使う液体は何か？", a: "エタノール" },
+            { id: 40, ch: 3, q: "ヨウ素液がデンプンに反応すると何色に変化するか？", a: "青紫色" },
+            { id: 41, ch: 3, q: "光合成でつくられた養分は、何を通って体全体へ運ばれるか？", a: "師管" },
+            { id: 42, ch: 3, q: "二酸化炭素を吸収すると白く濁る液体は何か？", a: "石灰水" },
+            { id: 43, ch: 3, q: "酸性で黄色、中性で緑色、アルカリ性で青色になる、実験で使う液体は？", a: "BTB溶液" },
+            { id: 44, ch: 3, q: "植物が酸素を取り入れ、二酸化炭素を出すはたらきを何というか？", a: "呼吸" },
+            { id: 45, ch: 3, q: "植物が呼吸を行っているのはいつか？", a: "一日中<br><span class='text-sm'>(昼も夜も)</span>" },
+            { id: 46, ch: 3, q: "植物が光合成を行っているのはいつか？", a: "光が当たる昼間<br><span class='text-sm'>(明るいとき)のみ</span>" },
+            { id: 47, ch: 3, q: "昼間、植物は呼吸と光合成のどちらをより盛んに行っているか？", a: "光合成" },
+            { id: 48, ch: 3, q: "細胞が酸素と養分を利用して、生きるエネルギーを取り出すことを何というか？", a: "細胞の呼吸" },
+            { id: 49, ch: 3, q: "顕微鏡の倍率を上げると、視野の明るさはどうなるか？", a: "暗くなる" },
+            { id: 50, ch: 3, q: "顕微鏡でカバーガラスをかけるとき、気泡が入らないようにするにはどうすればよいか？", a: "ピンセットで支えながら、<br>端からゆっくりと下ろす" }
+        ];
+
+        /**
+         * App Logic Class
+         */
+        class App {
+            constructor() {
+                this.state = {
+                    currentQueue: [], // Array of Question Objects
+                    reviewQueue: [],  // Array of Objects marked as NG
+                    currentIndex: 0,
+                    isFlipped: false,
+                    correctCount: 0,
+                    mode: 'study' // 'home', 'study', 'result'
+                };
+                
+                // DOM Elements
+                this.el = {
+                    screens: {
+                        home: document.getElementById('screen-home'),
+                        study: document.getElementById('screen-study'),
+                        result: document.getElementById('screen-result')
+                    },
+                    card: document.getElementById('flashcard'),
+                    cardQ: document.getElementById('card-question'),
+                    cardA: document.getElementById('card-answer'),
+                    controls: document.getElementById('controls-area'),
+                    progressText: document.getElementById('progress-text'),
+                    progressBar: document.getElementById('progress-bar'),
+                    chapterBadge: document.getElementById('chapter-badge'),
+                    version: document.getElementById('version-display'),
+                    footerVer: document.getElementById('footer-ver')
+                };
+
+                this.init();
+            }
+
+            init() {
+                // Set Version
+                this.el.version.innerText = `ver ${CONFIG.VERSION}`;
+                this.el.footerVer.innerText = CONFIG.VERSION;
+            }
+
+            // --- Navigation ---
+
+            switchScreen(screenName) {
+                Object.values(this.el.screens).forEach(el => el.classList.add('hidden-screen'));
+                this.el.screens[screenName].classList.remove('hidden-screen');
+                window.scrollTo(0, 0);
+            }
+
+            resetToHome() {
+                this.switchScreen('home');
+            }
+
+            // --- Game Logic ---
+
+            startSession(chapter) {
+                let questions = [];
+                
+                // Filter Questions
+                if (chapter === 'all') {
+                    questions = [...QUIZ_DATA];
+                    this.el.chapterBadge.innerText = "全範囲";
+                    this.el.chapterBadge.className = "bg-orange-100 text-orange-800 px-2 rounded text-xs py-0.5";
+                } else {
+                    questions = QUIZ_DATA.filter(q => q.ch === chapter);
+                    this.el.chapterBadge.innerText = `第${chapter}章`;
+                    this.el.chapterBadge.className = "bg-green-100 text-green-800 px-2 rounded text-xs py-0.5";
+                }
+
+                // Handle Shuffle
+                const orderMode = document.querySelector('input[name="orderMode"]:checked').value;
+                if (orderMode === 'random') {
+                    this.shuffleArray(questions);
+                }
+
+                // Init State
+                this.state.currentQueue = questions;
+                this.state.currentIndex = 0;
+                this.state.reviewQueue = [];
+                this.state.correctCount = 0;
+                this.state.isFlipped = false;
+
+                if (questions.length === 0) {
+                    alert("問題が見つかりませんでした。");
+                    return;
+                }
+
+                this.switchScreen('study');
+                this.renderCard();
+            }
+
+            startReview() {
+                // Move review queue to current queue
+                this.state.currentQueue = [...this.state.reviewQueue];
+                // Reset state
+                this.state.reviewQueue = [];
+                this.state.currentIndex = 0;
+                this.state.correctCount = 0; // Reset score for this sub-session
+                this.state.isFlipped = false;
+
+                this.el.chapterBadge.innerText = "復習モード";
+                this.el.chapterBadge.className = "bg-red-100 text-red-800 px-2 rounded text-xs py-0.5";
+
+                this.shuffleArray(this.state.currentQueue); // Always shuffle review
+                this.switchScreen('study');
+                this.renderCard();
+            }
+
+            renderCard() {
+                const currentQ = this.state.currentQueue[this.state.currentIndex];
+                const total = this.state.currentQueue.length;
+
+                // Update Progress
+                this.el.progressText.innerText = `${this.state.currentIndex + 1} / ${total}`;
+                const pct = ((this.state.currentIndex + 1) / total) * 100;
+                this.el.progressBar.style.width = `${pct}%`;
+
+                // Reset Card State
+                this.el.card.classList.remove('is-flipped');
+                this.el.controls.classList.remove('opacity-100', 'pointer-events-auto');
+                this.el.controls.classList.add('opacity-0', 'pointer-events-none');
+                this.state.isFlipped = false;
+
+                // Update Text (Small delay to allow flip back animation if needed)
+                setTimeout(() => {
+                    this.el.cardQ.innerText = currentQ.q;
+                    this.el.cardA.innerHTML = currentQ.a;
+                }, 200);
+            }
+
+            flipCard() {
+                if (this.state.isFlipped) return; // Already flipped
+                
+                this.el.card.classList.add('is-flipped');
+                this.state.isFlipped = true;
+
+                // Show Controls
+                setTimeout(() => {
+                    this.el.controls.classList.remove('opacity-0', 'pointer-events-none');
+                    this.el.controls.classList.add('opacity-100', 'pointer-events-auto');
+                }, 300);
+            }
+
+            processResult(isCorrect) {
+                const currentQ = this.state.currentQueue[this.state.currentIndex];
+
+                if (isCorrect) {
+                    this.state.correctCount++;
+                } else {
+                    this.state.reviewQueue.push(currentQ);
+                }
+
+                // Next Card or End
+                if (this.state.currentIndex < this.state.currentQueue.length - 1) {
+                    this.state.currentIndex++;
+                    this.renderCard();
+                } else {
+                    this.showResults();
+                }
+            }
+
+            showResults() {
+                this.switchScreen('result');
+                
+                const total = this.state.currentQueue.length;
+                const ok = this.state.correctCount;
+                const ng = this.state.reviewQueue.length; // Actually calculation should be total - ok if we didn't push repeats, but here reviewQueue holds failures.
+
+                document.getElementById('result-ok').innerText = ok;
+                document.getElementById('result-ng').innerText = ng;
+
+                const reviewBox = document.getElementById('review-suggestion');
+                if (ng > 0) {
+                    reviewBox.classList.remove('hidden');
+                } else {
+                    reviewBox.classList.add('hidden');
+                }
+            }
+
+            // --- Utilities ---
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+            }
+        }
+
+        // Instantiate App
+        const app = new App();
+
+    </script>
+</body>
+</html>
