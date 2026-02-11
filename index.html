@@ -21,7 +21,7 @@
         .scene {
             perspective: 1000px;
             width: 100%;
-            height: 300px;
+            height: 450px; /* カードの高さを300pxから450pxに拡大 */
             cursor: pointer;
         }
 
@@ -47,9 +47,9 @@
             justify-content: center;
             align-items: center;
             padding: 2rem;
-            border-radius: 1rem;
+            border-radius: 1.5rem; /* 角丸を少し大きく */
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            font-size: 1.25rem;
+            font-size: 1.5rem; /* 文字サイズを大きく */
             text-align: center;
             line-height: 1.6;
         }
@@ -105,10 +105,10 @@
     </header>
 
     <!-- Main Content Area -->
-    <main class="flex-grow p-4 max-w-3xl mx-auto w-full flex flex-col justify-center">
+    <main class="flex-grow p-4 max-w-4xl mx-auto w-full flex flex-col justify-center"> <!-- コンテナ幅を拡大 -->
 
         <!-- SCREEN: HOME (Mode Selection) -->
-        <div id="screen-home" class="space-y-6 animate-fade-in">
+        <div id="screen-home" class="space-y-6 animate-fade-in max-w-3xl mx-auto w-full">
             <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500">
                 <h2 class="text-lg font-bold mb-2 text-gray-700">学習範囲を選んでください</h2>
                 <div class="grid grid-cols-1 gap-3">
@@ -147,7 +147,7 @@
         </div>
 
         <!-- SCREEN: STUDY (Flashcards) -->
-        <div id="screen-study" class="hidden-screen w-full max-w-md mx-auto">
+        <div id="screen-study" class="hidden-screen w-full max-w-2xl mx-auto"> <!-- カード幅を拡大 max-w-md -> max-w-2xl -->
             
             <!-- Progress Bar -->
             <div class="mb-4">
@@ -155,64 +155,64 @@
                     <span id="progress-text">1 / 10</span>
                     <span id="chapter-badge" class="bg-green-100 text-green-800 px-2 rounded text-xs py-0.5">Chapter 1</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                    <div id="progress-bar" class="bg-green-600 h-2.5 rounded-full transition-all duration-300" style="width: 10%"></div>
+                <div class="w-full bg-gray-200 rounded-full h-3">
+                    <div id="progress-bar" class="bg-green-600 h-3 rounded-full transition-all duration-300" style="width: 10%"></div>
                 </div>
             </div>
 
             <!-- Card Area -->
-            <div class="scene mb-6" onclick="app.flipCard()">
+            <div class="scene mb-8" onclick="app.flipCard()">
                 <div class="card" id="flashcard">
                     <div class="card__face card__face--front">
-                        <div class="absolute top-4 left-4 text-xs font-bold text-green-600 border border-green-200 px-2 py-1 rounded">Q.</div>
-                        <p id="card-question" class="font-bold">ここに問題が表示されます</p>
-                        <p class="absolute bottom-4 text-xs text-gray-400 font-normal animate-pulse">タップして答えを見る</p>
+                        <div class="absolute top-6 left-6 text-sm font-bold text-green-600 border-2 border-green-200 px-3 py-1 rounded-lg">Q.</div>
+                        <p id="card-question" class="font-bold px-4">ここに問題が表示されます</p>
+                        <p class="absolute bottom-6 text-sm text-gray-400 font-normal animate-pulse">タップして答えを見る</p>
                     </div>
                     <div class="card__face card__face--back">
-                        <div class="absolute top-4 left-4 text-xs font-bold text-green-200 border border-green-400 px-2 py-1 rounded">A.</div>
-                        <p id="card-answer" class="font-bold text-xl">ここに答えが表示されます</p>
+                        <div class="absolute top-6 left-6 text-sm font-bold text-green-200 border-2 border-green-400 px-3 py-1 rounded-lg">A.</div>
+                        <p id="card-answer" class="font-bold text-2xl px-4">ここに答えが表示されます</p>
                     </div>
                 </div>
             </div>
 
             <!-- Controls (Visible after flip) -->
-            <div id="controls-area" class="grid grid-cols-2 gap-4 opacity-0 pointer-events-none transition-opacity duration-200">
-                <button onclick="app.processResult(false)" class="btn-push bg-red-100 text-red-700 py-3 rounded-xl font-bold border-b-4 border-red-200 hover:bg-red-200 flex flex-col items-center">
+            <div id="controls-area" class="grid grid-cols-2 gap-6 opacity-0 pointer-events-none transition-opacity duration-200">
+                <button onclick="app.processResult(false)" class="btn-push bg-red-100 text-red-700 py-4 rounded-2xl font-bold border-b-4 border-red-200 hover:bg-red-200 flex flex-col items-center text-lg shadow-sm">
                     <span>🤔 まだ不安</span>
-                    <span class="text-xs font-normal">あとで復習</span>
+                    <span class="text-sm font-normal mt-1">あとで復習</span>
                 </button>
-                <button onclick="app.processResult(true)" class="btn-push bg-blue-100 text-blue-700 py-3 rounded-xl font-bold border-b-4 border-blue-200 hover:bg-blue-200 flex flex-col items-center">
+                <button onclick="app.processResult(true)" class="btn-push bg-blue-100 text-blue-700 py-4 rounded-2xl font-bold border-b-4 border-blue-200 hover:bg-blue-200 flex flex-col items-center text-lg shadow-sm">
                     <span>👍 覚えた！</span>
-                    <span class="text-xs font-normal">次へ</span>
+                    <span class="text-sm font-normal mt-1">次へ</span>
                 </button>
             </div>
         </div>
 
         <!-- SCREEN: RESULT -->
-        <div id="screen-result" class="hidden-screen text-center space-y-6">
-            <div class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-green-500">
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">おつかれさま！</h2>
-                <p class="text-gray-600 mb-6">今回のセッションが終了しました。</p>
+        <div id="screen-result" class="hidden-screen text-center space-y-6 max-w-2xl mx-auto">
+            <div class="bg-white p-10 rounded-3xl shadow-xl border-t-8 border-green-500">
+                <h2 class="text-3xl font-bold text-gray-800 mb-2">おつかれさま！</h2>
+                <p class="text-gray-600 mb-8 text-lg">今回のセッションが終了しました。</p>
                 
-                <div class="flex justify-center space-x-8 mb-6">
+                <div class="flex justify-center space-x-12 mb-8">
                     <div class="text-center">
-                        <div class="text-4xl font-bold text-blue-600" id="result-ok">0</div>
-                        <div class="text-sm text-gray-500">覚えた</div>
+                        <div class="text-6xl font-bold text-blue-600 mb-2" id="result-ok">0</div>
+                        <div class="text-gray-500 font-bold">覚えた</div>
                     </div>
                     <div class="text-center">
-                        <div class="text-4xl font-bold text-red-500" id="result-ng">0</div>
-                        <div class="text-sm text-gray-500">要復習</div>
+                        <div class="text-6xl font-bold text-red-500 mb-2" id="result-ng">0</div>
+                        <div class="text-gray-500 font-bold">要復習</div>
                     </div>
                 </div>
 
-                <div id="review-suggestion" class="hidden bg-red-50 p-4 rounded-lg border border-red-100 mb-4">
-                    <p class="text-red-700 font-bold mb-2">💡 苦手な問題を復習しよう！</p>
-                    <button onclick="app.startReview()" class="btn-push w-full bg-red-500 text-white py-2 rounded-lg font-bold shadow hover:bg-red-600">
+                <div id="review-suggestion" class="hidden bg-red-50 p-6 rounded-2xl border-2 border-red-100 mb-6">
+                    <p class="text-red-700 font-bold mb-4 text-lg">💡 苦手な問題を復習しよう！</p>
+                    <button onclick="app.startReview()" class="btn-push w-full bg-red-500 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-red-600 text-lg">
                         「要復習」のみリトライ
                     </button>
                 </div>
 
-                <button onclick="app.resetToHome()" class="btn-push w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-bold hover:bg-gray-200">
+                <button onclick="app.resetToHome()" class="btn-push w-full bg-gray-100 text-gray-700 py-4 rounded-xl font-bold hover:bg-gray-200 text-lg">
                     最初の画面に戻る
                 </button>
             </div>
@@ -220,7 +220,7 @@
 
     </main>
 
-    <footer class="bg-gray-100 text-center py-4 text-xs text-gray-500">
+    <footer class="bg-gray-100 text-center py-6 text-sm text-gray-500 mt-auto">
         <p>&copy; 2024 Junior High Science App | ver <span id="footer-ver"></span></p>
     </footer>
 
@@ -230,7 +230,7 @@
          * Configuration & Data
          */
         const CONFIG = {
-            VERSION: "1.2.1", // Update this string to update the app version display
+            VERSION: "1.2.2", // Update this string to update the app version display
         };
 
         const QUIZ_DATA = [
