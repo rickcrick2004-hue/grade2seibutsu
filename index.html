@@ -15,14 +15,17 @@
             background-color: #f0fdf4; /* Light Green background */
             color: #1f2937;
             overflow-x: hidden;
+            /* Prevent pull-to-refresh on mobile */
+            overscroll-behavior-y: none;
         }
 
         /* Card Flip Animation */
         .scene {
             perspective: 1000px;
             width: 100%;
-            height: 450px; /* カードの高さを300pxから450pxに拡大 */
+            height: 450px;
             cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .card {
@@ -46,12 +49,14 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 2rem;
-            border-radius: 1.5rem; /* 角丸を少し大きく */
+            padding: 1.5rem;
+            border-radius: 1.5rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            font-size: 1.5rem; /* 文字サイズを大きく */
             text-align: center;
-            line-height: 1.6;
+            line-height: 1.5;
+            /* Scroll handling for large text */
+            overflow-y: auto; 
+            scrollbar-width: thin;
         }
 
         .card__face--front {
@@ -66,6 +71,18 @@
             transform: rotateY(180deg);
         }
 
+        /* Custom Scrollbar for Card */
+        .card__face::-webkit-scrollbar {
+            width: 6px;
+        }
+        .card__face::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .card__face::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.5);
+            border-radius: 20px;
+        }
+
         /* Utility */
         .hidden-screen {
             display: none;
@@ -73,13 +90,14 @@
 
         .btn-push {
             transition: transform 0.1s, box-shadow 0.1s;
+            touch-action: manipulation;
         }
         .btn-push:active {
             transform: translateY(2px);
             box-shadow: none;
         }
 
-        /* Scrollbar hiding for cleaner UI */
+        /* Scrollbar hiding for cleaner UI (global) */
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -105,7 +123,7 @@
     </header>
 
     <!-- Main Content Area -->
-    <main class="flex-grow p-4 max-w-4xl mx-auto w-full flex flex-col justify-center"> <!-- コンテナ幅を拡大 -->
+    <main class="flex-grow p-4 max-w-4xl mx-auto w-full flex flex-col justify-center">
 
         <!-- SCREEN: HOME (Mode Selection) -->
         <div id="screen-home" class="space-y-6 animate-fade-in max-w-3xl mx-auto w-full">
@@ -128,6 +146,11 @@
                         <span>全範囲まとめテスト</span>
                         <span id="count-all" class="text-xs bg-orange-200 px-2 py-1 rounded-full">--問</span>
                     </button>
+                    <!-- Random 10 Button -->
+                    <button onclick="app.startRandom10()" class="btn-push w-full text-left px-4 py-3 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-lg font-bold text-purple-800 flex justify-between items-center shadow-sm mt-2">
+                        <span>🎲 ランダム10問チャレンジ</span>
+                        <span class="text-xs bg-purple-200 px-2 py-1 rounded-full">10問</span>
+                    </button>
                 </div>
             </div>
 
@@ -147,7 +170,7 @@
         </div>
 
         <!-- SCREEN: STUDY (Flashcards) -->
-        <div id="screen-study" class="hidden-screen w-full max-w-2xl mx-auto"> <!-- カード幅を拡大 max-w-md -> max-w-2xl -->
+        <div id="screen-study" class="hidden-screen w-full max-w-2xl mx-auto">
             
             <!-- Progress Bar -->
             <div class="mb-4">
@@ -165,23 +188,35 @@
                 <div class="card" id="flashcard">
                     <div class="card__face card__face--front">
                         <div class="absolute top-6 left-6 text-sm font-bold text-green-600 border-2 border-green-200 px-3 py-1 rounded-lg">Q.</div>
-                        <p id="card-question" class="font-bold px-4">ここに問題が表示されます</p>
+                        <!-- Added overflow safety container -->
+                        <div class="w-full max-h-full overflow-y-auto flex flex-col justify-center items-center">
+                            <p id="card-question" class="font-bold px-4 text-2xl md:text-4xl leading-relaxed">ここに問題が表示されます</p>
+                        </div>
                         <p class="absolute bottom-6 text-sm text-gray-400 font-normal animate-pulse">タップして答えを見る</p>
                     </div>
                     <div class="card__face card__face--back">
                         <div class="absolute top-6 left-6 text-sm font-bold text-green-200 border-2 border-green-400 px-3 py-1 rounded-lg">A.</div>
-                        <p id="card-answer" class="font-bold text-2xl px-4">ここに答えが表示されます</p>
+                        <!-- Added overflow safety container -->
+                        <div class="w-full max-h-full overflow-y-auto flex flex-col justify-center items-center pt-8 pb-4">
+                            <p id="card-answer" class="font-bold px-4 text-3xl md:text-5xl leading-relaxed mb-4">ここに答えが表示されます</p>
+                            <!-- Explanation Area -->
+                            <div id="card-explanation-container" class="hidden w-full px-4 mt-2">
+                                <p id="card-explanation" class="text-base md:text-lg font-normal text-green-100 px-4 py-2 border-t border-green-500/50">
+                                    ここに解説が表示されます
+                                </p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- Controls (Visible after flip) -->
             <div id="controls-area" class="grid grid-cols-2 gap-6 opacity-0 pointer-events-none transition-opacity duration-200">
-                <button onclick="app.processResult(false)" class="btn-push bg-red-100 text-red-700 py-4 rounded-2xl font-bold border-b-4 border-red-200 hover:bg-red-200 flex flex-col items-center text-lg shadow-sm">
+                <button onclick="app.processResult(false); event.stopPropagation();" class="btn-push bg-red-100 text-red-700 py-4 rounded-2xl font-bold border-b-4 border-red-200 hover:bg-red-200 flex flex-col items-center text-lg shadow-sm">
                     <span>🤔 まだ不安</span>
                     <span class="text-sm font-normal mt-1">あとで復習</span>
                 </button>
-                <button onclick="app.processResult(true)" class="btn-push bg-blue-100 text-blue-700 py-4 rounded-2xl font-bold border-b-4 border-blue-200 hover:bg-blue-200 flex flex-col items-center text-lg shadow-sm">
+                <button onclick="app.processResult(true); event.stopPropagation();" class="btn-push bg-blue-100 text-blue-700 py-4 rounded-2xl font-bold border-b-4 border-blue-200 hover:bg-blue-200 flex flex-col items-center text-lg shadow-sm">
                     <span>👍 覚えた！</span>
                     <span class="text-sm font-normal mt-1">次へ</span>
                 </button>
@@ -230,19 +265,19 @@
          * Configuration & Data
          */
         const CONFIG = {
-            VERSION: "1.2.2", // Update this string to update the app version display
+            VERSION: "1.4.1", // Update this string to update the app version display
         };
 
         const QUIZ_DATA = [
             // Chapter 1: 細胞と生物の成り立ち
             { id: 1, ch: 1, q: "生物の体をつくる基本単位を何というか？", a: "細胞" },
-            { id: 2, ch: 1, q: "細胞の中にふつう1個あり、染色液によく染まる丸い粒を何というか？", a: "核" },
+            { id: 2, ch: 1, q: "細胞の中にふつう1個あり、染色液によく染まる丸い粒を何というか？", a: "核", e: "核は1つの細胞に通常1つあり、酢酸カーミン液などで赤く染まります。" },
             { id: 3, ch: 1, q: "細胞の最も外側にある、薄い膜を何というか？", a: "細胞膜" },
             { id: 4, ch: 1, q: "核のまわりの、細胞膜に包まれた部分をまとめて何というか？", a: "細胞質" },
             { id: 5, ch: 1, q: "植物の細胞にのみ見られる、光合成を行う緑色の粒を何というか？", a: "葉緑体" },
-            { id: 6, ch: 1, q: "植物の細胞にのみ見られる、細胞膜の外側にある丈夫なしきりを何というか？", a: "細胞壁" },
+            { id: 6, ch: 1, q: "植物の細胞にのみ見られる、細胞膜の外側にある丈夫なしきりを何というか？", a: "細胞壁", e: "植物の体を支えるのに役立ちます。" },
             { id: 7, ch: 1, q: "植物の細胞に発達しており、不要な物質や貯蔵物質が溶けた液体を含む袋を何というか？", a: "液胞" },
-            { id: 8, ch: 1, q: "核を染める際によく使われる、赤色の染色液の名前は？（1つ答えよ）", a: "酢酸カーミン液<br><span class='text-sm'>(または酢酸オルセイン液)</span>" },
+            { id: 8, ch: 1, q: "核を染める際によく使われる、赤色の染色液の名前は？（1つ答えよ）", a: "酢酸カーミン液<br><span class='text-sm'>(または酢酸オルセイン液)</span>", e: "核は赤色に染まります。" },
             { id: 9, ch: 1, q: "体が1つの細胞だけでできている生物を何というか？", a: "単細胞生物" },
             { id: 10, ch: 1, q: "ミカヅキモ、ゾウリムシ、ミドリムシ、アメーバなどは何生物に分類されるか？", a: "単細胞生物" },
             { id: 11, ch: 1, q: "体が多数の細胞からできている生物を何というか？", a: "多細胞生物" },
@@ -254,7 +289,7 @@
             { id: 51, ch: 1, q: "核にはどのような役割があるか？", a: "細胞の活動の中心となる" },
             { id: 52, ch: 1, q: "核を染める際、青紫色に染める染色液の名前は？", a: "酢酸ダーリア液" },
             { id: 53, ch: 1, q: "ゾウリムシが移動するために使う、体の表面にある細かい毛を何というか？", a: "せん毛" },
-            { id: 54, ch: 1, q: "顕微鏡の対物レンズを10倍から40倍に変えると、視野の広さはどうなるか？", a: "狭くなる" },
+            { id: 54, ch: 1, q: "顕微鏡の対物レンズを10倍から40倍に変えると、視野の広さはどうなるか？", a: "狭くなる", e: "倍率を上げると、見える範囲（視野）は狭くなり、明るさは暗くなります。" },
             { id: 70, ch: 1, q: "植物の細胞と動物の細胞の両方に共通して見られるつくりを2つ答えよ。", a: "核と細胞膜" },
 
             // Chapter 2: 植物の体のつくり
@@ -264,16 +299,16 @@
             { id: 19, ch: 2, q: "根から吸い上げられた水や肥料分の通り道となる管を何というか？", a: "道管" },
             { id: 20, ch: 2, q: "葉で作られた養分の通り道となる管を何というか？", a: "師管" },
             { id: 21, ch: 2, q: "道管や師管が集まって束のようになっている部分を何というか？", a: "維管束" },
-            { id: 22, ch: 2, q: "葉の維管束において、道管は「表側」と「裏側」のどちらにあるか？", a: "表側" },
-            { id: 23, ch: 2, q: "茎の維管束において、道管は「内側」と「外側」のどちらにあるか？", a: "内側" },
-            { id: 24, ch: 2, q: "ホウセンカ（双子葉類）の茎の維管束はどのように並んでいるか？", a: "輪のように並んでいる" },
-            { id: 25, ch: 2, q: "トウモロコシ（単子葉類）の茎の維管束はどのように並んでいるか？", a: "全体に散らばっている" },
+            { id: 22, ch: 2, q: "葉の維管束において、道管は「表側」と「裏側」のどちらにあるか？", a: "表側", e: "内側の道管（水が通る）が表側にきます。" },
+            { id: 23, ch: 2, q: "茎の維管束において、道管は「内側」と「外側」のどちらにあるか？", a: "内側", e: "茎では内側が道管、外側が師管です。" },
+            { id: 24, ch: 2, q: "ホウセンカ（双子葉類）の茎の維管束はどのように並んでいるか？", a: "輪のように並んでいる", e: "双子葉類（アブラナ、ヒマワリなど）の特徴です。" },
+            { id: 25, ch: 2, q: "トウモロコシ（単子葉類）の茎の維管束はどのように並んでいるか？", a: "全体に散らばっている", e: "単子葉類（イネ、ユリなど）の特徴です。" },
             { id: 26, ch: 2, q: "根の先端近くにある、細い毛のようなものを何というか？", a: "根毛" },
             { id: 27, ch: 2, q: "根毛があることで、根の表面積はどうなるか？", a: "大きくなる" },
             { id: 28, ch: 2, q: "根の表面積が大きくなることで、どのような利点があるか？", a: "水や肥料分を<br>効率よく吸収できる" },
             // Chapter 2 追加分
-            { id: 55, ch: 2, q: "蒸散が行われることで、根からの何がさかんになるか？", a: "水の吸収" },
-            { id: 56, ch: 2, q: "蒸散の実験で、気孔をふさいで水蒸気を出さないようにするために塗るものは？", a: "ワセリン" },
+            { id: 55, ch: 2, q: "蒸散が行われることで、根からの何がさかんになるか？", a: "水の吸収", e: "蒸散によって水が引っ張り上げられるため、根からの吸収もさかんになります。" },
+            { id: 56, ch: 2, q: "蒸散の実験で、気孔をふさいで水蒸気を出さないようにするために塗るものは？", a: "ワセリン", e: "ワセリンは水をはじく性質があります。" },
             { id: 57, ch: 2, q: "ホウセンカ（双子葉類）の茎の維管束は、どのような形で並んでいるか？", a: "輪のような形" },
             { id: 58, ch: 2, q: "トウモロコシ（単子葉類）の茎の維管束は、どのような状態で並んでいるか？", a: "全体に散らばっている" },
             { id: 59, ch: 2, q: "葉の断面において、最も外側にある細胞の層を何というか？", a: "表皮" },
@@ -282,7 +317,7 @@
 
             // Chapter 3: 蒸散と光合成・呼吸
             { id: 29, ch: 3, q: "植物内の水が、水蒸気となって気孔から出ていく現象を何というか？", a: "蒸散" },
-            { id: 30, ch: 3, q: "蒸散は、葉の「表側」と「裏側」のどちらでより盛んに行われるか？", a: "裏側" },
+            { id: 30, ch: 3, q: "蒸散は、葉の「表側」と「裏側」のどちらでより盛んに行われるか？", a: "裏側", e: "多くの植物では、気孔は葉の裏側に多くあるためです。" },
             { id: 31, ch: 3, q: "蒸散を調べる実験で、水面からの蒸発を防ぐために何を使うか？", a: "油" },
             { id: 32, ch: 3, q: "蒸散の量を比べる実験で、気孔をふさぐために塗る物質は何か？", a: "ワセリン" },
             { id: 33, ch: 3, q: "植物が光を受けて、デンプンなどの養分をつくるはたらきを何というか？", a: "光合成" },
@@ -290,26 +325,26 @@
             { id: 35, ch: 3, q: "光合成の原料となる、空気中から取り入れる気体は何か？", a: "二酸化炭素" },
             { id: 36, ch: 3, q: "光合成の原料となる、根から吸収する物質は何か？", a: "水" },
             { id: 37, ch: 3, q: "光合成によってつくられ、空気中に出される気体は何か？", a: "酸素" },
-            { id: 38, ch: 3, q: "デンプンがあることを確かめるために使う試薬は何か？", a: "ヨウ素液" },
-            { id: 39, ch: 3, q: "葉をヨウ素液につける前、脱色するために使う液体は何か？", a: "エタノール" },
+            { id: 38, ch: 3, q: "デンプンがあることを確かめるために使う試薬は何か？", a: "ヨウ素液", e: "デンプンがあると青紫色に変化します。" },
+            { id: 39, ch: 3, q: "葉をヨウ素液につける前、脱色するために使う液体は何か？", a: "エタノール", e: "葉の緑色（葉緑素）を抜いて、色の変化を見やすくします。" },
             { id: 40, ch: 3, q: "ヨウ素液がデンプンに反応すると何色に変化するか？", a: "青紫色" },
             { id: 41, ch: 3, q: "光合成でつくられた養分は、何を通って体全体へ運ばれるか？", a: "師管" },
             { id: 42, ch: 3, q: "二酸化炭素を吸収すると白く濁る液体は何か？", a: "石灰水" },
-            { id: 43, ch: 3, q: "酸性で黄色、中性で緑色、アルカリ性で青色になる、実験で使う液体は？", a: "BTB溶液" },
+            { id: 43, ch: 3, q: "酸性で黄色、中性で緑色、アルカリ性で青色になる、実験で使う液体は？", a: "BTB溶液", e: "酸性:黄色、中性:緑色、アルカリ性:青色です。" },
             { id: 44, ch: 3, q: "植物が酸素を取り入れ、二酸化炭素を出すはたらきを何というか？", a: "呼吸" },
-            { id: 45, ch: 3, q: "植物が呼吸を行っているのはいつか？", a: "一日中<br><span class='text-sm'>(昼も夜も)</span>" },
+            { id: 45, ch: 3, q: "植物が呼吸を行っているのはいつか？", a: "一日中<br><span class='text-sm'>(昼も夜も)</span>", e: "生きている間はずっと呼吸をしています。" },
             { id: 46, ch: 3, q: "植物が光合成を行っているのはいつか？", a: "光が当たる昼間<br><span class='text-sm'>(明るいとき)のみ</span>" },
-            { id: 47, ch: 3, q: "昼間、植物は呼吸と光合成のどちらをより盛んに行っているか？", a: "光合成" },
+            { id: 47, ch: 3, q: "昼間、植物は呼吸と光合成のどちらをより盛んに行っているか？", a: "光合成", e: "光合成の量が呼吸の量を上回るため、二酸化炭素を吸収し酸素を出しているように見えます。" },
             { id: 48, ch: 3, q: "細胞が酸素と養分を利用して、生きるエネルギーを取り出すことを何というか？", a: "細胞の呼吸" },
             { id: 49, ch: 3, q: "顕微鏡の倍率を上げると、視野の明るさはどうなるか？", a: "暗くなる" },
             { id: 50, ch: 3, q: "顕微鏡でカバーガラスをかけるとき、気泡が入らないようにするにはどうすればよいか？", a: "ピンセットで支えながら、<br>端からゆっくりと下ろす" },
             // Chapter 3 追加分
             { id: 62, ch: 3, q: "植物の葉は、効率よく日光が当たるようにどのようについているか？", a: "互いに重なり合わないようについている" },
-            { id: 63, ch: 3, q: "光合成の実験の前に、植物を一昼夜暗い場所に置くのはなぜか？", a: "葉にあるデンプンをなくすため" },
-            { id: 64, ch: 3, q: "水中の植物に光を当てたときに出る気体に、火のついた線香を入れるとどうなるか？", a: "線香が炎をあげて燃える<br><span class='text-sm'>(酸素が多いため)</span>" },
+            { id: 63, ch: 3, q: "光合成の実験の前に、植物を一昼夜暗い場所に置くのはなぜか？", a: "葉にあるデンプンをなくすため", e: "すでに葉にあるデンプンを呼吸で使ってなくし、実験の結果を正確にするためです。" },
+            { id: 64, ch: 3, q: "水中の植物に光を当てたときに出る気体に、火のついた線香を入れるとどうなるか？", a: "線香が炎をあげて燃える<br><span class='text-sm'>(酸素が多いため)</span>", e: "酸素にはものを燃やすはたらき（助燃性）があります。" },
             { id: 65, ch: 3, q: "ヨウ素液の反応を見やすくするため、葉を熱い何につけて脱色するか？", a: "エタノール" },
-            { id: 66, ch: 3, q: "BTB溶液の色が青色に変化したとき、液中の二酸化炭素の量はどうなったといえるか？", a: "減少した<br><span class='text-sm'>(アルカリ性になった)</span>" },
-            { id: 67, ch: 3, q: "BTB溶液に息を吹き込んだり、呼吸で二酸化炭素が増えたりすると、何色に変化するか？", a: "黄色" },
+            { id: 66, ch: 3, q: "BTB溶液の色が青色に変化したとき、液中の二酸化炭素の量はどうなったといえるか？", a: "減少した<br><span class='text-sm'>(アルカリ性になった)</span>", e: "二酸化炭素が水に溶けると酸性になりますが、減るとアルカリ性（青色）に変化します。" },
+            { id: 67, ch: 3, q: "BTB溶液に息を吹き込んだり、呼吸で二酸化炭素が増えたりすると、何色に変化するか？", a: "黄色", e: "二酸化炭素が増えて酸性になったためです。" },
             { id: 68, ch: 3, q: "昼間、植物の気体の出入りが「光合成」だけを行っているように見えるのはなぜか？", a: "呼吸よりも光合成の方が<br>さかんに行われているから" },
             { id: 69, ch: 3, q: "細胞が呼吸を行う際、酸素と養分を利用してエネルギーを取り出した後、何ができるか？", a: "二酸化炭素と水" }
         ];
@@ -338,6 +373,8 @@
                     card: document.getElementById('flashcard'),
                     cardQ: document.getElementById('card-question'),
                     cardA: document.getElementById('card-answer'),
+                    cardExp: document.getElementById('card-explanation'), // Explanation element
+                    cardExpContainer: document.getElementById('card-explanation-container'),
                     controls: document.getElementById('controls-area'),
                     progressText: document.getElementById('progress-text'),
                     progressBar: document.getElementById('progress-bar'),
@@ -409,7 +446,22 @@
                     this.shuffleArray(questions);
                 }
 
-                // Init State
+                this.startQuiz(questions);
+            }
+
+            startRandom10() {
+                let questions = [...QUIZ_DATA];
+                this.shuffleArray(questions);
+                questions = questions.slice(0, 10);
+                
+                this.el.chapterBadge.innerText = "ランダム10問";
+                this.el.chapterBadge.className = "bg-purple-100 text-purple-800 px-2 rounded text-xs py-0.5";
+
+                this.startQuiz(questions);
+            }
+
+            startQuiz(questions) {
+                 // Init State
                 this.state.currentQueue = questions;
                 this.state.currentIndex = 0;
                 this.state.reviewQueue = [];
@@ -457,24 +509,49 @@
                 this.el.controls.classList.add('opacity-0', 'pointer-events-none');
                 this.state.isFlipped = false;
 
+                // Reset Scroll Position
+                const scrollContainers = document.querySelectorAll('.card__face');
+                scrollContainers.forEach(el => el.scrollTop = 0);
+                const innerScrolls = document.querySelectorAll('.overflow-y-auto');
+                innerScrolls.forEach(el => el.scrollTop = 0);
+
                 // Update Text (Small delay to allow flip back animation if needed)
                 setTimeout(() => {
                     this.el.cardQ.innerText = currentQ.q;
                     this.el.cardA.innerHTML = currentQ.a;
+                    
+                    // Explanation Logic
+                    if (currentQ.e) {
+                        this.el.cardExp.innerHTML = `💡 ${currentQ.e}`;
+                        this.el.cardExpContainer.classList.remove('hidden');
+                    } else {
+                        this.el.cardExp.innerHTML = "";
+                        this.el.cardExpContainer.classList.add('hidden');
+                    }
                 }, 200);
             }
 
             flipCard() {
-                if (this.state.isFlipped) return; // Already flipped
+                // Toggle state instead of returning if flipped
+                this.state.isFlipped = !this.state.isFlipped;
                 
-                this.el.card.classList.add('is-flipped');
-                this.state.isFlipped = true;
-
-                // Show Controls
-                setTimeout(() => {
-                    this.el.controls.classList.remove('opacity-0', 'pointer-events-none');
-                    this.el.controls.classList.add('opacity-100', 'pointer-events-auto');
-                }, 300);
+                if (this.state.isFlipped) {
+                    // FLIP TO BACK (Answer)
+                    this.el.card.classList.add('is-flipped');
+                    
+                    // Show Controls
+                    setTimeout(() => {
+                        this.el.controls.classList.remove('opacity-0', 'pointer-events-none');
+                        this.el.controls.classList.add('opacity-100', 'pointer-events-auto');
+                    }, 300);
+                } else {
+                    // FLIP TO FRONT (Question)
+                    this.el.card.classList.remove('is-flipped');
+                    
+                    // Hide Controls immediately
+                    this.el.controls.classList.remove('opacity-100', 'pointer-events-auto');
+                    this.el.controls.classList.add('opacity-0', 'pointer-events-none');
+                }
             }
 
             processResult(isCorrect) {
