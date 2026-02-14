@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@500&display=swap" rel="stylesheet">
     <style>
         /* Base Styles */
         body {
@@ -15,7 +16,6 @@
             background-color: #f0fdf4; /* Light Green background */
             color: #1f2937;
             overflow-x: hidden;
-            /* Prevent pull-to-refresh on mobile */
             overscroll-behavior-y: none;
         }
 
@@ -54,7 +54,6 @@
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
             text-align: center;
             line-height: 1.5;
-            /* Scroll handling for large text */
             overflow-y: auto; 
             scrollbar-width: thin;
         }
@@ -81,6 +80,11 @@
         .card__face::-webkit-scrollbar-thumb {
             background-color: rgba(156, 163, 175, 0.5);
             border-radius: 20px;
+        }
+
+        /* Timer Font */
+        .font-mono {
+            font-family: 'Roboto Mono', monospace;
         }
 
         /* Utility */
@@ -172,11 +176,17 @@
         <!-- SCREEN: STUDY (Flashcards) -->
         <div id="screen-study" class="hidden-screen w-full max-w-2xl mx-auto">
             
-            <!-- Progress Bar -->
+            <!-- Progress & Timer Bar -->
             <div class="mb-4">
-                <div class="flex justify-between text-sm font-semibold text-gray-600 mb-1">
-                    <span id="progress-text">1 / 10</span>
-                    <span id="chapter-badge" class="bg-green-100 text-green-800 px-2 rounded text-xs py-0.5">Chapter 1</span>
+                <div class="flex justify-between items-end mb-1">
+                    <div class="text-sm font-semibold text-gray-600">
+                        <span id="progress-text">1 / 10</span>
+                        <span id="chapter-badge" class="ml-2 bg-green-100 text-green-800 px-2 rounded text-xs py-0.5">Chapter 1</span>
+                    </div>
+                    <!-- Timer Display -->
+                    <div class="font-mono text-lg font-bold text-gray-700 bg-white px-3 py-0.5 rounded shadow-sm border border-gray-200">
+                        ⏱️ <span id="timer-display">0.0</span>s
+                    </div>
                 </div>
                 <div class="w-full bg-gray-200 rounded-full h-3">
                     <div id="progress-bar" class="bg-green-600 h-3 rounded-full transition-all duration-300" style="width: 10%"></div>
@@ -188,7 +198,6 @@
                 <div class="card" id="flashcard">
                     <div class="card__face card__face--front">
                         <div class="absolute top-6 left-6 text-sm font-bold text-green-600 border-2 border-green-200 px-3 py-1 rounded-lg">Q.</div>
-                        <!-- Added overflow safety container -->
                         <div class="w-full max-h-full overflow-y-auto flex flex-col justify-center items-center">
                             <p id="card-question" class="font-bold px-4 text-2xl md:text-4xl leading-relaxed">ここに問題が表示されます</p>
                         </div>
@@ -196,7 +205,6 @@
                     </div>
                     <div class="card__face card__face--back">
                         <div class="absolute top-6 left-6 text-sm font-bold text-green-200 border-2 border-green-400 px-3 py-1 rounded-lg">A.</div>
-                        <!-- Added overflow safety container -->
                         <div class="w-full max-h-full overflow-y-auto flex flex-col justify-center items-center pt-8 pb-4">
                             <p id="card-answer" class="font-bold px-4 text-3xl md:text-5xl leading-relaxed mb-4">ここに答えが表示されます</p>
                             <!-- Explanation Area -->
@@ -227,8 +235,15 @@
         <div id="screen-result" class="hidden-screen text-center space-y-6 max-w-2xl mx-auto">
             <div class="bg-white p-10 rounded-3xl shadow-xl border-t-8 border-green-500">
                 <h2 class="text-3xl font-bold text-gray-800 mb-2">おつかれさま！</h2>
-                <p class="text-gray-600 mb-8 text-lg">今回のセッションが終了しました。</p>
+                <p class="text-gray-600 mb-4 text-lg">今回のセッションが終了しました。</p>
                 
+                <!-- Time Result -->
+                <div class="mb-8 inline-block bg-gray-50 px-6 py-2 rounded-full border border-gray-200">
+                    <span class="text-gray-500 text-sm font-bold mr-2">TIME</span>
+                    <span id="result-time" class="text-2xl font-mono font-bold text-gray-800">0.0</span>
+                    <span class="text-gray-500 text-sm">秒</span>
+                </div>
+
                 <div class="flex justify-center space-x-12 mb-8">
                     <div class="text-center">
                         <div class="text-6xl font-bold text-blue-600 mb-2" id="result-ok">0</div>
@@ -265,7 +280,7 @@
          * Configuration & Data
          */
         const CONFIG = {
-            VERSION: "1.4.1", // Update this string to update the app version display
+            VERSION: "1.5.0", // Update this string to update the app version display
         };
 
         const QUIZ_DATA = [
@@ -360,7 +375,12 @@
                     currentIndex: 0,
                     isFlipped: false,
                     correctCount: 0,
-                    mode: 'study' // 'home', 'study', 'result'
+                    mode: 'study', // 'home', 'study', 'result'
+                    
+                    // Timer State
+                    startTime: 0,
+                    timerInterval: null,
+                    elapsedSec: 0
                 };
                 
                 // DOM Elements
@@ -385,7 +405,11 @@
                     badgeCh1: document.getElementById('count-ch1'),
                     badgeCh2: document.getElementById('count-ch2'),
                     badgeCh3: document.getElementById('count-ch3'),
-                    badgeAll: document.getElementById('count-all')
+                    badgeAll: document.getElementById('count-all'),
+                    
+                    // Timer
+                    timerDisplay: document.getElementById('timer-display'),
+                    resultTime: document.getElementById('result-time')
                 };
 
                 this.init();
@@ -412,6 +436,30 @@
                 this.el.badgeAll.innerText = `${countAll}問`;
             }
 
+            // --- Timer Logic ---
+
+            startTimer() {
+                this.stopTimer(); // Ensure clear first
+                this.state.startTime = Date.now();
+                this.state.elapsedSec = 0;
+                this.el.timerDisplay.innerText = "0.0";
+                
+                this.state.timerInterval = setInterval(() => {
+                    const now = Date.now();
+                    const diff = now - this.state.startTime;
+                    const sec = (diff / 1000).toFixed(1);
+                    this.state.elapsedSec = sec;
+                    this.el.timerDisplay.innerText = sec;
+                }, 100);
+            }
+
+            stopTimer() {
+                if (this.state.timerInterval) {
+                    clearInterval(this.state.timerInterval);
+                    this.state.timerInterval = null;
+                }
+            }
+
             // --- Navigation ---
 
             switchScreen(screenName) {
@@ -421,6 +469,7 @@
             }
 
             resetToHome() {
+                this.stopTimer();
                 this.switchScreen('home');
             }
 
@@ -475,6 +524,7 @@
 
                 this.switchScreen('study');
                 this.renderCard();
+                this.startTimer(); // Start Timer
             }
 
             startReview() {
@@ -492,6 +542,7 @@
                 this.shuffleArray(this.state.currentQueue); // Always shuffle review
                 this.switchScreen('study');
                 this.renderCard();
+                this.startTimer(); // Restart Timer for review
             }
 
             renderCard() {
@@ -573,14 +624,18 @@
             }
 
             showResults() {
+                this.stopTimer(); // Stop Timer
                 this.switchScreen('result');
                 
                 const total = this.state.currentQueue.length;
                 const ok = this.state.correctCount;
-                const ng = this.state.reviewQueue.length; // Actually calculation should be total - ok if we didn't push repeats, but here reviewQueue holds failures.
+                const ng = this.state.reviewQueue.length;
 
                 document.getElementById('result-ok').innerText = ok;
                 document.getElementById('result-ng').innerText = ng;
+                
+                // Show final time
+                this.el.resultTime.innerText = this.state.elapsedSec;
 
                 const reviewBox = document.getElementById('review-suggestion');
                 if (ng > 0) {
